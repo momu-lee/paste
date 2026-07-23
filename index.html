@@ -59,7 +59,7 @@
       background-color: #f7f2ef;
     }
 
-    /* 右上角純文字鎖頭與內嵌密碼輸入面板 */
+    /* 右上角鎖頭與 Hover/Click 控制區塊 */
     .admin-container {
       position: fixed;
       top: 16px;
@@ -76,38 +76,85 @@
       border: none;
       font-size: 20px;
       cursor: pointer;
-      opacity: 0.4;
+      opacity: 0.6;
       transition: opacity 0.2s, transform 0.2s;
       line-height: 1;
       padding: 4px;
     }
     .admin-toggle-btn:hover {
-      opacity: 0.9;
-      transform: scale(1.15);
+      opacity: 1;
+      transform: scale(1.2);
     }
 
     .admin-panel {
       display: none;
       background: #ffffff;
       border: 1px solid #e2d2cc;
-      padding: 6px;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(58, 46, 43, 0.15);
-      align-items: center;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(58, 46, 43, 0.18);
+      flex-direction: column;
+      gap: 10px;
+      min-width: 150px;
+    }
+
+    body.is-unlocked .admin-container:hover .admin-panel {
+      display: flex !important;
     }
 
     .admin-panel input {
       font-family: var(--main-font);
-      width: 100px;
+      width: 100%;
       background: #faf6f5;
       border: 1px solid #e2d2cc;
       border-radius: 6px;
-      padding: 5px 8px;
+      padding: 6px 8px;
       font-size: 12px;
       outline: none;
     }
     .admin-panel input:focus {
       border-color: var(--accent-rose);
+    }
+
+    .admin-dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dark);
+      border-bottom: 1px dashed #e2d2cc;
+      padding-bottom: 8px;
+    }
+
+    .admin-stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-stat-value {
+      color: var(--accent-rose);
+      font-weight: 700;
+    }
+
+    .export-btn {
+      font-family: var(--main-font);
+      background: var(--accent-rose);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      text-align: center;
+    }
+    .export-btn:hover {
+      background: var(--accent-rose-hover);
     }
 
     /* ---------------- 階段 1：中央輸入面板 ---------------- */
@@ -284,14 +331,13 @@
       }
     }
 
-    /* 便利貼本體與浮動動畫 */
     .sticky-note {
       font-family: var(--main-font);
       position: absolute;
       z-index: 1;
       width: 170px;
       height: 140px;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(58, 46, 43, 0.15), 0 2px 6px rgba(0, 0, 0, 0.04);
       border: 1.5px solid rgba(255, 255, 255, 0.85);
@@ -305,6 +351,26 @@
                  smoothRiverFlow 12s ease-in-out infinite alternate;
       user-select: none;
       will-change: transform;
+    }
+
+    .sticky-note.new-paste-flash {
+      animation: pasteGlow 2.5s ease-out forwards !important;
+      z-index: 9999 !important;
+    }
+
+    @keyframes pasteGlow {
+      0% {
+        transform: scale(1.3) rotate(0deg);
+        box-shadow: 0 0 35px #ffd700, 0 0 60px #ff7b00;
+      }
+      50% {
+        transform: scale(1.1) rotate(-3deg);
+        box-shadow: 0 0 25px #ffd700, 0 0 40px #ff7b00;
+      }
+      100% {
+        transform: scale(1) rotate(var(--rot));
+        box-shadow: 0 10px 25px rgba(58, 46, 43, 0.15);
+      }
     }
 
     @keyframes smoothRiverFlow {
@@ -336,7 +402,7 @@
       -webkit-line-clamp: 4;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      max-height: 70px; 
+      max-height: 65px; 
     }
 
     .more-indicator {
@@ -344,7 +410,7 @@
       font-size: 10px;
       font-weight: bold;
       text-align: right;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .footer-row {
@@ -356,6 +422,13 @@
       margin-top: 2px;
     }
 
+    .author-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      max-width: 110px;
+    }
+
     .sticky-author {
       font-size: 11px;
       font-weight: 700;
@@ -363,42 +436,36 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 110px;
+      max-width: 65px;
     }
 
-    .action-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .icon-btn-inline {
+      font-family: var(--main-font);
+      background: transparent;
+      border: none;
+      font-size: 11px;
+      cursor: pointer;
+      color: #5c423d;
+      padding: 0 1px;
+      line-height: 1;
+      transition: transform 0.2s;
     }
+    .icon-btn-inline:hover { transform: scale(1.25); }
 
     .like-btn {
       font-family: var(--main-font);
       background: transparent;
       border: none;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
       color: #b54545;
       display: flex;
       align-items: center;
       gap: 2px;
-      padding: 2px;
+      padding: 1px;
       transition: transform 0.2s;
     }
     .like-btn:hover { transform: scale(1.15); }
-
-    .admin-delete-btn {
-      font-family: var(--main-font);
-      background: transparent;
-      color: #b54545;
-      border: none;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      display: none;
-      line-height: 1;
-      padding: 2px 4px;
-    }
 
     /* ---------------- 階段 3：點擊查看全文彈窗 ---------------- */
     .modal-overlay {
@@ -442,6 +509,7 @@
       overflow-y: auto;
       word-break: break-word;
       white-space: pre-wrap;
+      padding-right: 28px; /* 右側留白避免撞到關閉按鈕 ✕ */
     }
 
     .modal-footer {
@@ -457,39 +525,15 @@
       font-size: 13px;
       font-weight: 700;
       color: #5c423d;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .modal-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .modal-like-btn {
-      font-family: var(--main-font);
-      background: transparent;
-      border: none;
-      font-size: 14px;
-      cursor: pointer;
-      color: #b54545;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      padding: 2px 4px;
-      transition: transform 0.2s;
-    }
-    .modal-like-btn:hover { transform: scale(1.15); }
-
-    .modal-delete-btn {
-      font-family: var(--main-font);
-      background: transparent;
-      color: #b54545;
-      border: none;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      display: none;
-      line-height: 1;
+      gap: 8px;
     }
 
     .modal-close {
@@ -504,7 +548,6 @@
       padding: 4px;
     }
 
-    /* 手機優化版 Paste📝 按鈕 */
     .re-enter-btn {
       font-family: var(--main-font);
       position: fixed;
@@ -526,23 +569,38 @@
 </head>
 <body>
 
-  <!-- 右上角純文字鎖頭與內嵌密碼輸入面板 -->
-  <div class="admin-container">
+  <!-- 右上角鎖頭與 Hover/Click 控制區塊 -->
+  <div class="admin-container" id="adminContainer">
     <button class="admin-toggle-btn" id="adminToggleBtn">🔒</button>
+    
     <div class="admin-panel" id="adminPanel">
-      <input type="password" id="adminPasswordInput" />
+      <input type="password" id="adminPasswordInput" placeholder="" />
+      
+      <div id="adminDashboardSection" style="display: none;">
+        <div class="admin-dashboard">
+          <div class="admin-stat-item">
+            <span>總便利貼張數:</span>
+            <span class="admin-stat-value" id="statTotalNotes">0</span>
+          </div>
+          <div class="admin-stat-item">
+            <span>累積總讚數:</span>
+            <span class="admin-stat-value" id="statTotalLikes">0</span>
+          </div>
+        </div>
+        <button class="export-btn" id="exportCsvBtn" style="margin-top: 8px;">📥 匯出 CSV 備份</button>
+      </div>
     </div>
   </div>
 
-  <!-- 1. 輸入面板 -->
+  <!-- 1. 輸入/編輯面板 -->
   <div class="input-stage" id="inputStage">
     <div class="input-card">
       <button class="close-btn" id="closeBtn">✕</button>
-      <h1>✍️ 寫一張玫瑰花園漂漂河</h1>
+      <h1 id="inputStageTitle">✍️ 寫一張玫瑰花園漂漂河</h1>
       
       <div class="field-group">
-        <div class="error-msg" id="nicknameErr">請輸入暱稱!</div>
-        <input type="text" id="nickname" placeholder="暱稱..." maxlength="12" />
+        <div class="error-msg" id="nicknameErr">請輸入暱稱! (最多7字)</div>
+        <input type="text" id="nickname" placeholder="暱稱 (最多7字)..." maxlength="7" />
       </div>
 
       <div class="field-group">
@@ -570,10 +628,13 @@
       <button class="modal-close" id="modalCloseBtn">✕</button>
       <div class="modal-text" id="modalText"></div>
       <div class="modal-footer">
-        <div class="modal-author" id="modalAuthor"></div>
+        <div class="modal-author">
+          <span id="modalAuthor"></span>
+          <button class="icon-btn-inline" id="modalEditBtn" style="display:none;" title="編輯">✏️</button>
+          <button class="icon-btn-inline" id="modalDeleteBtn" style="display:none;" title="刪除">🗑️</button>
+        </div>
         <div class="modal-actions">
-          <button class="modal-like-btn" id="modalLikeBtn">💗 <span id="modalLikeCount">0</span></button>
-          <button class="modal-delete-btn" id="modalDeleteBtn">×</button>
+          <button class="like-btn" id="modalLikeBtn">💗 <span id="modalLikeCount">0</span></button>
         </div>
       </div>
     </div>
@@ -584,63 +645,169 @@
   <script type="module">
     let lastHue = null;
     let isAdmin = localStorage.getItem('isAdminUnlocked') === 'true';
+    let editingDocId = null; 
+    let newlyCreatedDocId = null; 
+    let allNotesMap = new Map();
 
+    function getMyNotesHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('my_sticky_notes') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveMyNoteToHistory(docId) {
+      const history = getMyNotesHistory();
+      history[docId] = Date.now();
+      localStorage.setItem('my_sticky_notes', JSON.stringify(history));
+    }
+
+    function removeMyNoteFromHistory(docId) {
+      const history = getMyNotesHistory();
+      delete history[docId];
+      localStorage.setItem('my_sticky_notes', JSON.stringify(history));
+    }
+
+    function isWithinFifteenMinutes(docId) {
+      const history = getMyNotesHistory();
+      const createdTime = history[docId];
+      if (!createdTime) return false;
+
+      const elapsedMs = Date.now() - createdTime;
+      const fifteenMinsMs = 15 * 60 * 1000;
+      return elapsedMs < fifteenMinsMs;
+    }
+
+    const adminContainer = document.getElementById('adminContainer');
     const adminToggleBtn = document.getElementById('adminToggleBtn');
     const adminPanel = document.getElementById('adminPanel');
     const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const adminDashboardSection = document.getElementById('adminDashboardSection');
+    const statTotalNotes = document.getElementById('statTotalNotes');
+    const statTotalLikes = document.getElementById('statTotalLikes');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
 
-    if (adminToggleBtn) {
-      adminToggleBtn.innerText = isAdmin ? '🔓' : '🔒';
+    function refreshAdminUI() {
+      if (isAdmin) {
+        document.body.classList.add('is-unlocked');
+        adminToggleBtn.innerText = '🔓';
+        adminPasswordInput.style.display = 'none';
+        adminDashboardSection.style.display = 'block';
+        adminPanel.style.display = '';
+        updateAdminDashboardStats();
+      } else {
+        document.body.classList.remove('is-unlocked');
+        adminToggleBtn.innerText = '🔒';
+        adminPasswordInput.style.display = 'block';
+        adminDashboardSection.style.display = 'none';
+        adminPanel.style.display = 'none';
+      }
     }
 
+    refreshAdminUI();
+
     document.addEventListener('DOMContentLoaded', () => {
-      const toggleBtn = document.getElementById('adminToggleBtn');
-      const panel = document.getElementById('adminPanel');
-      const pwdInput = document.getElementById('adminPasswordInput');
-
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (isAdmin) {
-            isAdmin = false;
-            localStorage.removeItem('isAdminUnlocked');
-            toggleBtn.innerText = '🔒';
-            panel.style.display = 'none';
-            location.reload();
-          } else {
-            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
-            if (panel.style.display === 'flex') {
-              pwdInput.value = '';
-              pwdInput.focus();
-            }
+      adminToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isAdmin) {
+          isAdmin = false;
+          localStorage.removeItem('isAdminUnlocked');
+          refreshAdminUI();
+          location.reload();
+        } else {
+          adminPanel.style.display = adminPanel.style.display === 'flex' ? 'none' : 'flex';
+          if (adminPanel.style.display === 'flex') {
+            adminPasswordInput.value = '';
+            adminPasswordInput.focus();
           }
-        });
-      }
-
-      if (pwdInput) {
-        pwdInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            if (pwdInput.value === "two851011") {
-              isAdmin = true;
-              localStorage.setItem('isAdminUnlocked', 'true');
-              toggleBtn.innerText = '🔓';
-              panel.style.display = 'none';
-              pwdInput.value = '';
-              location.reload();
-            } else {
-              pwdInput.value = '';
-              pwdInput.focus();
-            }
-          }
-        });
-      }
-
-      document.addEventListener('click', (e) => {
-        if (panel && !panel.contains(e.target) && e.target !== toggleBtn) {
-          panel.style.display = 'none';
         }
       });
+
+      adminPasswordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          if (adminPasswordInput.value === "two851011") {
+            isAdmin = true;
+            localStorage.setItem('isAdminUnlocked', 'true');
+            adminPasswordInput.value = '';
+            refreshAdminUI();
+            location.reload();
+          } else {
+            adminPasswordInput.value = '';
+            adminPasswordInput.focus();
+          }
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!isAdmin && adminPanel && !adminContainer.contains(e.target)) {
+          adminPanel.style.display = 'none';
+        }
+      });
+
+      exportCsvBtn.addEventListener('click', () => {
+        exportNotesToCsv();
+      });
+
+      setInterval(() => {
+        allNotesMap.forEach((_, id) => {
+          updateNoteInlineUI(id);
+        });
+      }, 15000);
     });
+
+    function updateNoteInlineUI(docId) {
+      const valid = isWithinFifteenMinutes(docId);
+      const editBtn = document.getElementById(`edit-btn-${docId}`);
+      const delBtn = document.getElementById(`del-btn-${docId}`);
+
+      if (!isAdmin && !valid) {
+        if (editBtn) editBtn.style.display = 'none';
+        if (delBtn) delBtn.style.display = 'none';
+      }
+    }
+
+    function updateAdminDashboardStats() {
+      let totalNotes = allNotesMap.size;
+      let totalLikes = 0;
+      allNotesMap.forEach(data => {
+        totalLikes += (data.likes || 0);
+      });
+      if (statTotalNotes) statTotalNotes.innerText = totalNotes;
+      if (statTotalLikes) statTotalLikes.innerText = totalLikes;
+    }
+
+    function exportNotesToCsv() {
+      if (allNotesMap.size === 0) {
+        alert("目前沒有可導出的便利貼資料！");
+        return;
+      }
+
+      let csvRows = [["ID", "暱稱", "Threads帳號", "想說的話", "按讚數", "時間"]];
+
+      allNotesMap.forEach((data, id) => {
+        let dateStr = "";
+        if (data.timestamp && data.timestamp.toDate) {
+          dateStr = data.timestamp.toDate().toLocaleString();
+        }
+        let nickname = `"${(data.nickname || '').replace(/"/g, '""')}"`;
+        let threads = `"${(data.threads || '').replace(/"/g, '""')}"`;
+        let text = `"${(data.text || '').replace(/"/g, '""')}"`;
+        let likes = data.likes || 0;
+
+        csvRows.push([id, nickname, threads, text, likes, `"${dateStr}"`]);
+      });
+
+      let csvContent = "\uFEFF" + csvRows.map(e => e.join(",")).join("\n");
+      let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      let url = URL.createObjectURL(blob);
+      let link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `玫瑰花園留言備份_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
     function generateDynamicMorandiColor() {
       let hue;
@@ -716,6 +883,7 @@
 
     function initApp() {
       const inputStage = document.getElementById('inputStage');
+      const inputStageTitle = document.getElementById('inputStageTitle');
       const nicknameInput = document.getElementById('nickname');
       const threadsInput = document.getElementById('threads');
       const messageInput = document.getElementById('message');
@@ -731,6 +899,7 @@
       const modalOverlay = document.getElementById('modalOverlay');
       const modalCloseBtn = document.getElementById('modalCloseBtn');
       const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+      const modalEditBtn = document.getElementById('modalEditBtn');
       const modalLikeBtn = document.getElementById('modalLikeBtn');
       const viewport = document.getElementById('viewport');
 
@@ -742,12 +911,38 @@
 
       function hideInputModal() {
         inputStage.style.display = 'none';
+        editingDocId = null;
         clearErrors();
       }
 
-      function showInputModal() {
-        inputStage.style.display = 'flex';
+      function openEditStage(targetDocId) {
         clearErrors();
+        editingDocId = targetDocId;
+
+        inputStageTitle.innerText = "✏️ 編輯便利貼";
+        submitBtn.innerText = "儲存修改";
+        const data = allNotesMap.get(editingDocId);
+        if (data) {
+          nicknameInput.value = data.nickname || '';
+          threadsInput.value = data.threads || '';
+          messageInput.value = data.text || '';
+        }
+
+        inputStage.style.display = 'flex';
+        nicknameInput.focus();
+      }
+
+      function showInputModal() {
+        clearErrors();
+        editingDocId = null;
+
+        inputStageTitle.innerText = "✍️ 寫一張玫瑰花園漂漂河";
+        submitBtn.innerText = "送出便利貼";
+        nicknameInput.value = '';
+        threadsInput.value = '';
+        messageInput.value = '';
+
+        inputStage.style.display = 'flex';
         nicknameInput.focus();
       }
 
@@ -765,12 +960,28 @@
               likes: window.increment(1)
             });
           } catch (err) {
-            console.log("彈窗按愛心失敗：" + err.message);
+            console.log("按讚失敗：" + err.message);
           }
         }
       });
 
-      // 通用拖曳/滾動邏輯（電腦水平滑動，手機垂直滑動）
+      modalEditBtn.addEventListener('click', () => {
+        const docId = modalEditBtn.dataset.currentId;
+        if (docId) {
+          modalOverlay.style.display = 'none';
+          openEditStage(docId);
+        }
+      });
+
+      modalDeleteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const docId = modalDeleteBtn.dataset.currentId;
+        if (docId) {
+          modalOverlay.style.display = 'none';
+          await deleteNoteFromCloud(docId);
+        }
+      });
+
       let isMouseDown = false;
       let startX = 0, startY = 0;
       let startScrollLeft = 0, startScrollTop = 0;
@@ -851,11 +1062,14 @@
       window.getDocs(q).then((querySnapshot) => {
         querySnapshot.forEach((docSnap) => {
           const docId = docSnap.id;
+          const data = docSnap.data();
+          allNotesMap.set(docId, data);
           if (!renderedDocIds.has(docId)) {
             renderedDocIds.add(docId);
-            createStickyNote(docId, docSnap.data());
+            createStickyNote(docId, data);
           }
         });
+        updateAdminDashboardStats();
       }).catch((err) => {
         console.log("初始化載入中...");
       });
@@ -863,18 +1077,54 @@
       window.onSnapshot(q, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
           const docId = change.doc.id;
+          const data = change.doc.data();
+
           if (change.type === "added") {
+            allNotesMap.set(docId, data);
             if (!renderedDocIds.has(docId)) {
               renderedDocIds.add(docId);
-              createStickyNote(docId, change.doc.data());
+              const element = createStickyNote(docId, data);
+
+              if (docId === newlyCreatedDocId && element) {
+                newlyCreatedDocId = null;
+                setTimeout(() => {
+                  const noteX = parseFloat(element.style.left);
+                  const noteY = parseFloat(element.style.top);
+                  const isMobile = window.innerWidth <= 768;
+
+                  if (isMobile) {
+                    viewport.scrollTo({ top: Math.max(0, noteY - 100), behavior: 'smooth' });
+                  } else {
+                    viewport.scrollTo({ left: Math.max(0, noteX - window.innerWidth / 2 + 100), behavior: 'smooth' });
+                  }
+
+                  element.classList.add('new-paste-flash');
+                  setTimeout(() => { element.classList.remove('new-paste-flash'); }, 2600);
+                }, 100);
+              }
             }
           }
           if (change.type === "modified") {
-            const data = change.doc.data();
-            const countEl = document.getElementById(`like-count-${docId}`);
-            if (countEl) {
-              countEl.innerText = data.likes || 0;
+            allNotesMap.set(docId, data);
+            
+            const noteEl = document.getElementById(`note-${docId}`);
+            if (noteEl) {
+              const contentEl = document.getElementById(`content-${docId}`);
+              const nickname = escapeHtml(data.nickname || '無名氏');
+              const threads = escapeHtml(data.threads || '');
+              const fullText = escapeHtml(data.text || '');
+              const authorText = (isAdmin && threads) ? `— ${nickname} (@${threads})` : `— ${nickname}`;
+
+              if (contentEl) contentEl.innerText = fullText;
+              const authorEl = noteEl.querySelector('.sticky-author');
+              if (authorEl) {
+                authorEl.innerText = authorText;
+                authorEl.title = authorText;
+              }
+              const countEl = document.getElementById(`like-count-${docId}`);
+              if (countEl) countEl.innerText = data.likes || 0;
             }
+
             const modalLikeBtn = document.getElementById('modalLikeBtn');
             const modalLikeCount = document.getElementById('modalLikeCount');
             if (modalOverlay.style.display === 'flex' && modalLikeBtn.dataset.currentId === docId) {
@@ -882,7 +1132,10 @@
             }
           }
           if (change.type === "removed") {
+            allNotesMap.delete(docId);
             renderedDocIds.delete(docId);
+            removeMyNoteFromHistory(docId);
+
             const el = document.getElementById(`note-${docId}`);
             if (el) el.remove();
             if (modalOverlay.style.display === 'flex' && modalDeleteBtn.dataset.currentId === docId) {
@@ -890,6 +1143,7 @@
             }
           }
         });
+        updateAdminDashboardStats();
       });
 
       async function submitNote() {
@@ -900,7 +1154,7 @@
 
         let hasError = false;
 
-        if (!nickname) {
+        if (!nickname || nickname.length > 7) {
           nicknameErr.style.display = 'block';
           hasError = true;
         }
@@ -915,25 +1169,44 @@
 
         if (hasError) return;
 
-        submitBtn.innerText = "傳送中...";
+        submitBtn.innerText = editingDocId ? "儲存中..." : "傳送中...";
         submitBtn.disabled = true;
 
         try {
-          if (window.addDoc && window.messagesRef) {
-            await window.addDoc(window.messagesRef, {
-              nickname: nickname,
-              threads: threads,
-              text: text,
-              likes: 0,
-              timestamp: window.serverTimestamp()
-            });
+          if (window.messagesRef) {
+            if (editingDocId) {
+              const noteRef = window.doc(window.db, "sticky_notes", editingDocId);
+              await window.updateDoc(noteRef, {
+                nickname: nickname,
+                threads: threads,
+                text: text
+              });
+
+              const currentData = allNotesMap.get(editingDocId) || {};
+              currentData.nickname = nickname;
+              currentData.threads = threads;
+              currentData.text = text;
+              allNotesMap.set(editingDocId, currentData);
+
+            } else {
+              const docRef = await window.addDoc(window.messagesRef, {
+                nickname: nickname,
+                threads: threads,
+                text: text,
+                likes: 0,
+                timestamp: window.serverTimestamp()
+              });
+              newlyCreatedDocId = docRef.id;
+              saveMyNoteToHistory(docRef.id);
+            }
+
             nicknameInput.value = '';
             threadsInput.value = '';
             messageInput.value = '';
             hideInputModal();
           }
         } catch (err) {
-          console.log("發布失敗：" + err.message);
+          console.log("操作失敗：" + err.message);
         } finally {
           submitBtn.innerText = "送出便利貼";
           submitBtn.disabled = false;
@@ -947,7 +1220,7 @@
 
     function createStickyNote(docId, data) {
       const boardStage = document.getElementById('boardStage');
-      if (!boardStage) return;
+      if (!boardStage) return null;
 
       const note = document.createElement('div');
       note.className = 'sticky-note';
@@ -996,6 +1269,7 @@
       const likesCount = data.likes || 0;
 
       const authorText = (isAdmin && threads) ? `— ${nickname} (@${threads})` : `— ${nickname}`;
+      const canEditDelete = isAdmin || isWithinFifteenMinutes(docId);
 
       note.innerHTML = `
         <div>
@@ -1003,11 +1277,12 @@
           <div class="more-indicator" id="indicator-${docId}" style="display:none;">[...more]</div>
         </div>
         <div class="footer-row">
-          <div class="sticky-author" title="${authorText}">${authorText}</div>
-          <div class="action-group">
-            <button class="like-btn" id="like-btn-${docId}">💗 <span id="like-count-${docId}">${likesCount}</span></button>
-            <button class="admin-delete-btn" id="del-btn-${docId}" style="display: ${isAdmin ? 'block' : 'none'};">×</button>
+          <div class="author-group">
+            <div class="sticky-author" title="${authorText}">${authorText}</div>
+            ${canEditDelete ? `<button class="icon-btn-inline" id="edit-btn-${docId}" title="編輯">✏️</button>` : ''}
+            ${canEditDelete ? `<button class="icon-btn-inline" id="del-btn-${docId}" title="刪除">🗑️</button>` : ''}
           </div>
+          <button class="like-btn" id="like-btn-${docId}">💗 <span id="like-count-${docId}">${likesCount}</span></button>
         </div>
       `;
 
@@ -1021,19 +1296,38 @@
         }
       }, 50);
 
+      // 按讚
       const likeBtn = document.getElementById(`like-btn-${docId}`);
       likeBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         try {
           const noteRef = window.doc(window.db, "sticky_notes", docId);
-          await window.updateDoc(noteRef, {
-            likes: window.increment(1)
-          });
+          await window.updateDoc(noteRef, { likes: window.increment(1) });
         } catch (err) {
-          console.log("按愛心失敗：" + err.message);
+          console.log("按讚失敗：" + err.message);
         }
       });
 
+      // 編輯
+      const editBtn = document.getElementById(`edit-btn-${docId}`);
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.getElementById('modalOverlay').style.display = 'none';
+          
+          editingDocId = docId;
+          const currentData = allNotesMap.get(docId) || {};
+          
+          document.getElementById('inputStageTitle').innerText = "✏️ 編輯便利貼";
+          document.getElementById('submitBtn').innerText = "儲存修改";
+          document.getElementById('nickname').value = currentData.nickname || '';
+          document.getElementById('threads').value = currentData.threads || '';
+          document.getElementById('message').value = currentData.text || '';
+          document.getElementById('inputStage').style.display = 'flex';
+        });
+      }
+
+      // 刪除
       const delBtn = document.getElementById(`del-btn-${docId}`);
       if (delBtn) {
         delBtn.addEventListener('click', async (e) => {
@@ -1042,28 +1336,37 @@
         });
       }
 
+      // 點開放大 Modal
       note.addEventListener('click', () => {
         const modalOverlay = document.getElementById('modalOverlay');
         const modalCard = document.getElementById('modalCard');
         const modalText = document.getElementById('modalText');
         const modalAuthor = document.getElementById('modalAuthor');
         const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+        const modalEditBtn = document.getElementById('modalEditBtn');
         const modalLikeBtn = document.getElementById('modalLikeBtn');
         const modalLikeCount = document.getElementById('modalLikeCount');
         
         modalCard.style.backgroundColor = randomColor;
 
-        modalText.innerText = data.text || '';
-        modalAuthor.innerText = (isAdmin && data.threads) ? `— ${nickname} (@${escapeHtml(data.threads)})` : `— ${nickname}`;
-        modalLikeCount.innerText = data.likes || 0;
+        const currentData = allNotesMap.get(docId) || {};
+        const currentNickname = escapeHtml(currentData.nickname || '無名氏');
+
+        modalText.innerText = currentData.text || '';
+        modalAuthor.innerText = (isAdmin && currentData.threads) ? `— ${currentNickname} (@${escapeHtml(currentData.threads)})` : `— ${currentNickname}`;
+        modalLikeCount.innerText = currentData.likes || 0;
 
         modalDeleteBtn.dataset.currentId = docId;
+        modalEditBtn.dataset.currentId = docId;
         modalLikeBtn.dataset.currentId = docId;
 
-        if (isAdmin) {
-          modalDeleteBtn.style.display = 'block';
+        const valid = isWithinFifteenMinutes(docId);
+        if (isAdmin || valid) {
+          modalDeleteBtn.style.display = 'inline-block';
+          modalEditBtn.style.display = 'inline-block';
         } else {
           modalDeleteBtn.style.display = 'none';
+          modalEditBtn.style.display = 'none';
         }
 
         modalOverlay.style.display = 'flex';
@@ -1076,23 +1379,12 @@
       try {
         if (window.deleteDoc && window.doc && window.db) {
           await window.deleteDoc(window.doc(window.db, "sticky_notes", docId));
+          removeMyNoteFromHistory(docId);
         }
       } catch (err) {
         console.log("刪除失敗：" + err.message);
       }
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const modalDeleteBtn = document.getElementById('modalDeleteBtn');
-      if (modalDeleteBtn) {
-        modalDeleteBtn.addEventListener('click', async () => {
-          const docId = modalDeleteBtn.dataset.currentId;
-          if (docId) {
-            await deleteNoteFromCloud(docId);
-          }
-        });
-      }
-    });
 
     function escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
