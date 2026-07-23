@@ -284,7 +284,6 @@
       border-radius: 10px;
     }
 
-    /* ✨ 讓背景固定在視窗，不隨內容滑動而變空白 */
     .viewport::before {
       content: "";
       position: fixed;
@@ -319,7 +318,6 @@
         overflow-x: hidden;
         overflow-y: auto;
       }
-      /* ✨ 手機版背景圖片固定釘死，無論上下滑幾頁絕對不會變空白 */
       .viewport::before {
         background-image: url('https://images.plurk.com/2twQxiNJxYn1PJkwMKgGQY.jpg');
         background-size: cover;
@@ -356,7 +354,6 @@
       will-change: transform;
     }
 
-    /* ✨ 柔和珍珠白光圈 */
     .sticky-note.new-paste-flash {
       box-shadow: 0 0 22px rgba(255, 255, 255, 0.95), 0 0 40px rgba(255, 255, 255, 0.7), 0 10px 25px rgba(58, 46, 43, 0.15) !important;
       border-color: #ffffff !important;
@@ -1070,11 +1067,12 @@
           const data = change.doc.data();
 
           if (change.type === "added") {
+            // ✨ 防重複機制：如果這張卡片已經在畫面上（例如剛才用 temp- 渲染過、或已經記錄過），直接跳過不重複畫！
+            if (renderedDocIds.has(docId)) return;
+
             allNotesMap.set(docId, data);
-            if (!renderedDocIds.has(docId)) {
-              renderedDocIds.add(docId);
-              createStickyNote(docId, data);
-            }
+            renderedDocIds.add(docId);
+            createStickyNote(docId, data);
           }
           if (change.type === "modified") {
             allNotesMap.set(docId, data);
@@ -1184,7 +1182,6 @@
                     viewport.scrollTo({ left: Math.max(0, noteX - window.innerWidth / 2 + 100), behavior: 'smooth' });
                   }
 
-                  // 點亮白光（不淡出，時間到直接移除 class）
                   element.classList.add('new-paste-flash');
                   setTimeout(() => { element.classList.remove('new-paste-flash'); }, 2800);
                 }, 50);
@@ -1199,6 +1196,8 @@
 
               saveMyNoteToHistory(realId);
               allNotesMap.set(realId, noteData);
+              
+              // ✨ 將真實 ID 加入已渲染清單，並把 tempId 拔除，讓 onSnapshot 進來時知道這張已經畫過了
               renderedDocIds.add(realId);
               renderedDocIds.delete(tempId);
 
