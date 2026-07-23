@@ -200,7 +200,7 @@
     }
     .submit-btn:hover { background: var(--accent-rose-hover); }
 
-    /* ---------------- 階段 2：滾動畫布（電腦預設水平，手機自動切換為垂直） ---------------- */
+    /* ---------------- 階段 2：滾動畫布（電腦水平，手機垂直） ---------------- */
     .viewport {
       width: 100vw;
       height: 100svh;
@@ -255,9 +255,10 @@
         overflow-y: auto;
       }
       .board-stage {
-        min-width: 100vw;
+        width: 100vw !important;
         min-height: 100svh;
         height: auto !important;
+        padding-bottom: 100px;
       }
       .board-stage::before {
         background-image: url('https://images.plurk.com/2twQxiNJxYn1PJkwMKgGQY.jpg');
@@ -284,26 +285,13 @@
       opacity: 0.92;
       transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
       cursor: pointer;
-      animation: pasteIn 0.5s ease-out forwards, 
-                 smoothRiverFlow 12s ease-in-out infinite alternate;
       user-select: none;
       will-change: transform;
     }
 
-    @keyframes smoothRiverFlow {
-      0% { transform: translate3d(0, 0, 0) rotate(var(--rot)); }
-      50% { transform: translate3d(var(--dx1), var(--dy1), 0) rotate(calc(var(--rot) + 2deg)); }
-      100% { transform: translate3d(var(--dx2), var(--dy2), 0) rotate(calc(var(--rot) - 2deg)); }
-    }
-
-    @keyframes pasteIn {
-      from { opacity: 0; transform: scale(1.2) rotate(calc(var(--rot) + 5deg)); }
-      to { opacity: 0.92; transform: scale(1) rotate(var(--rot)); }
-    }
-
     .sticky-note:hover {
       opacity: 1 !important;
-      transform: scale(1.08) rotate(0deg) !important;
+      transform: scale(1.08);
       z-index: 9999 !important;
       box-shadow: 0 18px 38px rgba(58, 46, 43, 0.22);
     }
@@ -601,51 +589,52 @@
     const renderedDocIds = new Set();
     let currentUnusedSlotsInPage = [];
 
-    // 依據是否為手機版，自動動態分配「水平」或「垂直」的排版位置
-    function generate15NonOverlappingShuffledSlots(pageIndex) {
+    // 電腦維持原隨機佈局，手機改為整齊的直式上下排列
+    function generatePosition(index) {
       const isMobile = window.innerWidth <= 768;
-      const pageWidth = window.innerWidth;
-      const pageHeight = window.innerHeight;
-      const cols = isMobile ? 2 : 5;  // 手機每行 2 張，電腦每行 5 張
-      const rows = isMobile ? 4 : 3;  // 手機每頁 4 行，電腦 3 行
-      const cellWidth = pageWidth / cols;
-      const cellHeight = (isMobile ? Math.max(pageHeight, 700) : pageHeight) / rows;
-      let slots = [];
+      
+      if (isMobile) {
+        // 手機版：每行 2 張，依序往下排，絕不重疊
+        const cols = 2;
+        const colWidth = window.innerWidth / cols;
+        const colIndex = index % cols;
+        const rowIndex = Math.floor(index / cols);
+        
+        const x = colIndex * colWidth + (colWidth - NOTE_WIDTH) / 2;
+        const y = rowIndex * (NOTE_HEIGHT + 24) + 30;
+        return { x, y };
+      } else {
+        // 電腦版維持原本的漂漂河隨機分頁邏輯
+        if (currentUnusedSlotsInPage.length === 0) {
+          const pageIndex = Math.floor(index / NOTES_PER_PAGE);
+          const pageWidth = window.innerWidth;
+          const pageHeight = window.innerHeight;
+          const cols = 5;
+          const rows = 3;
+          const cellWidth = pageWidth / cols;
+          const cellHeight = pageHeight / rows;
+          let slots = [];
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const cellX = isMobile ? (c * cellWidth) : (pageIndex * pageWidth + c * cellWidth);
-          const cellY = isMobile ? (pageIndex * (pageHeight * 1.2) + r * cellHeight) : (r * cellHeight);
-          
-          const maxOffsetX = Math.max(0, cellWidth - NOTE_WIDTH - 15);
-          const maxOffsetY = Math.max(0, cellHeight - NOTE_HEIGHT - 15);
-          const randomX = cellX + 10 + Math.floor(Math.random() * maxOffsetX);
-          const randomY = cellY + 10 + Math.floor(Math.random() * maxOffsetY);
-          
-          const isTooCloseToButton = (randomX > pageWidth - 180 && randomY > pageHeight - 90);
-          if (!isTooCloseToButton) {
-            slots.push({ x: randomX, y: randomY });
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const cellX = pageIndex * pageWidth + c * cellWidth;
+              const cellY = r * cellHeight;
+              const maxOffsetX = Math.max(0, cellWidth - NOTE_WIDTH - 20);
+              const maxOffsetY = Math.max(0, cellHeight - NOTE_HEIGHT - 20);
+              const randomX = cellX + 10 + Math.floor(Math.random() * maxOffsetX);
+              const randomY = cellY + 10 + Math.floor(Math.random() * maxOffsetY);
+              slots.push({ x: randomX, y: randomY });
+            }
           }
+
+          for (let i = slots.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [slots[i], slots[j]] = [slots[j], slots[i]];
+          }
+          currentUnusedSlotsInPage = slots;
         }
+        return currentUnusedSlotsInPage.pop();
       }
-
-      if (slots.length === 0) {
-        slots.push({ x: 30, y: isMobile ? (pageIndex * pageHeight + 30) : 30 });
-      }
-
-      for (let i = slots.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [slots[i], slots[j]] = [slots[j], slots[i]];
-      }
-      return slots;
-    }
-
-    function getNext15GuaranteedPosition(index) {
-      if (currentUnusedSlotsInPage.length === 0) {
-        const pageIndex = Math.floor(index / NOTES_PER_PAGE);
-        currentUnusedSlotsInPage = generate15NonOverlappingShuffledSlots(pageIndex);
-      }
-      return currentUnusedSlotsInPage.pop();
     }
 
     const checkFirebase = setInterval(() => {
@@ -682,59 +671,39 @@
         if (e.target === modalOverlay) modalOverlay.style.display = 'none';
       });
 
-      // 電腦滑鼠拖曳滑動支援（手機則直接用原生觸控上下滾動）
-      let isMouseDown = false, startMouseX = 0, startMouseY = 0, startScrollLeft = 0, startScrollTop = 0, velocityX = 0, velocityY = 0, lastX = 0, lastY = 0, animationFrameId = null;
+      // 電腦滑鼠拖曳水平滾動支援
+      let isMouseDown = false, startMouseX = 0, startScrollLeft = 0, velocity = 0, lastX = 0, animationFrameId = null;
 
       function stopInertia() {
         if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
       }
 
       function applyInertia() {
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-          if (Math.abs(velocityY) > 0.5) {
-            viewport.scrollTop -= velocityY;
-            velocityY *= 0.92;
-            animationFrameId = requestAnimationFrame(applyInertia);
-          } else { velocityY = 0; }
-        } else {
-          if (Math.abs(velocityX) > 0.5) {
-            viewport.scrollLeft -= velocityX;
-            velocityX *= 0.92;
-            animationFrameId = requestAnimationFrame(applyInertia);
-          } else { velocityX = 0; }
-        }
+        if (Math.abs(velocity) > 0.5) {
+          viewport.scrollLeft -= velocity;
+          velocity *= 0.92;
+          animationFrameId = requestAnimationFrame(applyInertia);
+        } else { velocity = 0; }
       }
 
       viewport.addEventListener('mousedown', (e) => {
+        if (window.innerWidth <= 768) return; // 手機版直接用原生垂直滾動
         if (e.target.closest('.sticky-note') || e.target.closest('.re-enter-btn') || e.target.closest('.input-stage') || e.target.closest('.admin-container')) return;
         stopInertia();
         isMouseDown = true;
         startMouseX = e.pageX;
-        startMouseY = e.pageY;
         lastX = e.pageX;
-        lastY = e.pageY;
         startScrollLeft = viewport.scrollLeft;
-        startScrollTop = viewport.scrollTop;
-        velocityX = 0;
-        velocityY = 0;
+        velocity = 0;
       });
 
       window.addEventListener('mousemove', (e) => {
-        if (!isMouseDown) return;
+        if (!isMouseDown || window.innerWidth <= 768) return;
         e.preventDefault();
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-          const currentY = e.pageY;
-          viewport.scrollTop = startScrollTop - (currentY - startMouseY);
-          velocityY = currentY - lastY;
-          lastY = currentY;
-        } else {
-          const currentX = e.pageX;
-          viewport.scrollLeft = startScrollLeft - (currentX - startMouseX);
-          velocityX = currentX - lastX;
-          lastX = currentX;
-        }
+        const currentX = e.pageX;
+        viewport.scrollLeft = startScrollLeft - (currentX - startMouseX);
+        velocity = currentX - lastX;
+        lastX = currentX;
       });
 
       window.addEventListener('mouseup', () => {
@@ -744,11 +713,8 @@
       });
 
       viewport.addEventListener('wheel', (e) => {
-        stopInertia();
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-          if (e.deltaY !== 0) viewport.scrollTop += e.deltaY;
-        } else {
+        if (window.innerWidth > 768) {
+          stopInertia();
           if (e.deltaY !== 0) viewport.scrollLeft += e.deltaY;
         }
       }, { passive: true });
@@ -841,40 +807,28 @@
       const randomColor = generateDynamicMorandiColor();
       note.style.backgroundColor = randomColor;
 
-      const pos = getNext15GuaranteedPosition(globalNoteCount);
+      const pos = generatePosition(globalNoteCount);
       globalNoteCount++;
 
       note.style.left = `${pos.x}px`;
       note.style.top = `${pos.y}px`;
 
       const isMobile = window.innerWidth <= 768;
-      const pageIndex = Math.floor((globalNoteCount - 1) / NOTES_PER_PAGE);
-      
       if (isMobile) {
-        const minCanvasHeight = (pageIndex + 1) * window.innerHeight * 1.2;
-        if (minCanvasHeight > boardStage.offsetHeight) {
-          boardStage.style.height = `${minCanvasHeight}px`;
+        const requiredHeight = pos.y + NOTE_HEIGHT + 60;
+        if (requiredHeight > boardStage.offsetHeight) {
+          boardStage.style.height = `${requiredHeight}px`;
         }
       } else {
+        const pageIndex = Math.floor((globalNoteCount - 1) / NOTES_PER_PAGE);
         const minCanvasWidth = (pageIndex + 1) * window.innerWidth;
         if (minCanvasWidth > boardStage.offsetWidth) {
           boardStage.style.width = `${minCanvasWidth}px`;
         }
       }
 
-      const randomRot = (Math.random() * 16 - 8).toFixed(1);
-      const dx1 = (Math.random() * 12 - 6).toFixed(0) + 'px';
-      const dy1 = (Math.random() * 12 - 6).toFixed(0) + 'px';
-      const dx2 = (Math.random() * 14 - 7).toFixed(0) + 'px';
-      const dy2 = (Math.random() * 14 - 7).toFixed(0) + 'px';
-      const duration = (Math.random() * 4 + 10).toFixed(1) + 's';
-
-      note.style.setProperty('--rot', `${randomRot}deg`);
-      note.style.setProperty('--dx1', dx1);
-      note.style.setProperty('--dy1', dy1);
-      note.style.setProperty('--dx2', dx2);
-      note.style.setProperty('--dy2', dy2);
-      note.style.animationDuration = `0.5s, ${duration}`;
+      const randomRot = isMobile ? 0 : (Math.random() * 16 - 8).toFixed(1);
+      note.style.transform = `rotate(${randomRot}deg)`;
 
       const nickname = escapeHtml(data.nickname || '無名氏');
       const fullText = escapeHtml(data.text || '');
