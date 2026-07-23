@@ -200,7 +200,7 @@
     }
     .submit-btn:hover { background: var(--accent-rose-hover); }
 
-    /* ---------------- 階段 2：無限水平滾動畫布 ---------------- */
+    /* ---------------- 階段 2：滾動畫布（電腦預設水平，手機自動切換為垂直） ---------------- */
     .viewport {
       width: 100vw;
       height: 100svh;
@@ -213,7 +213,7 @@
     }
     .viewport:active { cursor: grabbing; }
 
-    .viewport::-webkit-scrollbar { height: 4px; }
+    .viewport::-webkit-scrollbar { height: 4px; width: 4px; }
     .viewport::-webkit-scrollbar-thumb {
       background: rgba(139, 90, 82, 0.25);
       border-radius: 10px;
@@ -231,7 +231,7 @@
       background-color: #f7f2ef;
     }
 
-    /* 預設（電腦版背景圖） */
+    /* 電腦版背景圖 */
     .board-stage::before {
       content: "";
       position: absolute;
@@ -248,13 +248,22 @@
       pointer-events: none;
     }
 
-    /* 手機版背景圖切換（當螢幕寬度小於等於 768px 時生效） */
+    /* 手機版：改為垂直上下滾動、背景圖設定 */
     @media (max-width: 768px) {
+      .viewport {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .board-stage {
+        min-width: 100vw;
+        min-height: 100svh;
+        height: auto !important;
+      }
       .board-stage::before {
         background-image: url('https://images.plurk.com/2twQxiNJxYn1PJkwMKgGQY.jpg');
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
+        background-repeat: repeat-y;
       }
     }
 
@@ -492,7 +501,7 @@
     </div>
   </div>
 
-  <!-- 2. 無限水平滾動畫布 -->
+  <!-- 2. 滾動畫布 -->
   <div class="viewport" id="viewport">
     <div class="board-stage" id="boardStage"></div>
   </div>
@@ -592,19 +601,22 @@
     const renderedDocIds = new Set();
     let currentUnusedSlotsInPage = [];
 
+    // 依據是否為手機版，自動動態分配「水平」或「垂直」的排版位置
     function generate15NonOverlappingShuffledSlots(pageIndex) {
+      const isMobile = window.innerWidth <= 768;
       const pageWidth = window.innerWidth;
       const pageHeight = window.innerHeight;
-      const cols = 5;
-      const rows = 3;
+      const cols = isMobile ? 2 : 5;  // 手機每行 2 張，電腦每行 5 張
+      const rows = isMobile ? 4 : 3;  // 手機每頁 4 行，電腦 3 行
       const cellWidth = pageWidth / cols;
-      const cellHeight = pageHeight / rows;
+      const cellHeight = (isMobile ? Math.max(pageHeight, 700) : pageHeight) / rows;
       let slots = [];
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const cellX = pageIndex * pageWidth + c * cellWidth;
-          const cellY = r * cellHeight;
+          const cellX = isMobile ? (c * cellWidth) : (pageIndex * pageWidth + c * cellWidth);
+          const cellY = isMobile ? (pageIndex * (pageHeight * 1.2) + r * cellHeight) : (r * cellHeight);
+          
           const maxOffsetX = Math.max(0, cellWidth - NOTE_WIDTH - 15);
           const maxOffsetY = Math.max(0, cellHeight - NOTE_HEIGHT - 15);
           const randomX = cellX + 10 + Math.floor(Math.random() * maxOffsetX);
@@ -618,7 +630,7 @@
       }
 
       if (slots.length === 0) {
-        slots.push({ x: pageIndex * pageWidth + 30, y: 30 });
+        slots.push({ x: 30, y: isMobile ? (pageIndex * pageHeight + 30) : 30 });
       }
 
       for (let i = slots.length - 1; i > 0; i--) {
@@ -670,18 +682,28 @@
         if (e.target === modalOverlay) modalOverlay.style.display = 'none';
       });
 
-      let isMouseDown = false, startMouseX = 0, startScrollLeft = 0, velocity = 0, lastX = 0, animationFrameId = null;
+      // 電腦滑鼠拖曳滑動支援（手機則直接用原生觸控上下滾動）
+      let isMouseDown = false, startMouseX = 0, startMouseY = 0, startScrollLeft = 0, startScrollTop = 0, velocityX = 0, velocityY = 0, lastX = 0, lastY = 0, animationFrameId = null;
 
       function stopInertia() {
         if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
       }
 
       function applyInertia() {
-        if (Math.abs(velocity) > 0.5) {
-          viewport.scrollLeft -= velocity;
-          velocity *= 0.92;
-          animationFrameId = requestAnimationFrame(applyInertia);
-        } else { velocity = 0; }
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          if (Math.abs(velocityY) > 0.5) {
+            viewport.scrollTop -= velocityY;
+            velocityY *= 0.92;
+            animationFrameId = requestAnimationFrame(applyInertia);
+          } else { velocityY = 0; }
+        } else {
+          if (Math.abs(velocityX) > 0.5) {
+            viewport.scrollLeft -= velocityX;
+            velocityX *= 0.92;
+            animationFrameId = requestAnimationFrame(applyInertia);
+          } else { velocityX = 0; }
+        }
       }
 
       viewport.addEventListener('mousedown', (e) => {
@@ -689,18 +711,30 @@
         stopInertia();
         isMouseDown = true;
         startMouseX = e.pageX;
+        startMouseY = e.pageY;
         lastX = e.pageX;
+        lastY = e.pageY;
         startScrollLeft = viewport.scrollLeft;
-        velocity = 0;
+        startScrollTop = viewport.scrollTop;
+        velocityX = 0;
+        velocityY = 0;
       });
 
       window.addEventListener('mousemove', (e) => {
         if (!isMouseDown) return;
         e.preventDefault();
-        const currentX = e.pageX;
-        viewport.scrollLeft = startScrollLeft - (currentX - startMouseX);
-        velocity = currentX - lastX;
-        lastX = currentX;
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          const currentY = e.pageY;
+          viewport.scrollTop = startScrollTop - (currentY - startMouseY);
+          velocityY = currentY - lastY;
+          lastY = currentY;
+        } else {
+          const currentX = e.pageX;
+          viewport.scrollLeft = startScrollLeft - (currentX - startMouseX);
+          velocityX = currentX - lastX;
+          lastX = currentX;
+        }
       });
 
       window.addEventListener('mouseup', () => {
@@ -711,7 +745,12 @@
 
       viewport.addEventListener('wheel', (e) => {
         stopInertia();
-        if (e.deltaY !== 0) viewport.scrollLeft += e.deltaY;
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          if (e.deltaY !== 0) viewport.scrollTop += e.deltaY;
+        } else {
+          if (e.deltaY !== 0) viewport.scrollLeft += e.deltaY;
+        }
       }, { passive: true });
 
       const q = window.query(window.messagesRef, window.limit(100));
@@ -808,10 +847,19 @@
       note.style.left = `${pos.x}px`;
       note.style.top = `${pos.y}px`;
 
+      const isMobile = window.innerWidth <= 768;
       const pageIndex = Math.floor((globalNoteCount - 1) / NOTES_PER_PAGE);
-      const minCanvasWidth = (pageIndex + 1) * window.innerWidth;
-      if (minCanvasWidth > boardStage.offsetWidth) {
-        boardStage.style.width = `${minCanvasWidth}px`;
+      
+      if (isMobile) {
+        const minCanvasHeight = (pageIndex + 1) * window.innerHeight * 1.2;
+        if (minCanvasHeight > boardStage.offsetHeight) {
+          boardStage.style.height = `${minCanvasHeight}px`;
+        }
+      } else {
+        const minCanvasWidth = (pageIndex + 1) * window.innerWidth;
+        if (minCanvasWidth > boardStage.offsetWidth) {
+          boardStage.style.width = `${minCanvasWidth}px`;
+        }
       }
 
       const randomRot = (Math.random() * 16 - 8).toFixed(1);
