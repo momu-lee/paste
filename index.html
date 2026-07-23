@@ -58,6 +58,27 @@
       background-color: #f7f2ef;
     }
 
+    /* 右上角管理員按鈕 */
+    .admin-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 25px;
+      z-index: 2500;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1.5px solid #e2d2cc;
+      font-size: 18px;
+      padding: 8px 12px;
+      border-radius: 50px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(139, 90, 82, 0.15);
+      transition: all 0.2s;
+    }
+    .admin-toggle-btn:hover {
+      background: #ffffff;
+      transform: scale(1.08);
+    }
+
     /* ---------------- 階段 1：中央輸入面板（已放大） ---------------- */
     .input-stage {
       position: fixed;
@@ -65,7 +86,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      display: none; /* 預設不顯示，等點按鈕才跳出 */
+      display: none;
       justify-content: center;
       align-items: center;
       z-index: 1000;
@@ -412,11 +433,14 @@
 </head>
 <body>
 
+  <!-- 右上角管理員開關按鈕 -->
+  <button class="admin-toggle-btn" id="adminToggleBtn">🔒</button>
+
   <!-- 1. 輸入面板 -->
   <div class="input-stage" id="inputStage">
     <div class="input-card">
       <button class="close-btn" id="closeBtn">✕</button>
-      <h1>✍️ 寫一張玫瑰花園便利貼</h1>
+      <h1>✍️ 寫一張玫瑰花園漂漂河</h1>
       <input type="text" id="nickname" placeholder="你的暱稱..." maxlength="12" />
       <textarea id="message" placeholder="寫下一句話..."></textarea>
       <button class="submit-btn" id="submitBtn">送出便利貼</button>
@@ -444,16 +468,42 @@
 
   <script type="module">
     let lastHue = null;
-
-    // 檢查網址是否有帶入管理員暗號
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('admin') === 'true') {
-      localStorage.setItem('isAdminUnlocked', 'true');
-    } else if (urlParams.get('admin') === 'false') {
-      localStorage.removeItem('isAdminUnlocked');
-      window.location.href = window.location.pathname; // 自動清除網址參數並重整
-    }
     let isAdmin = localStorage.getItem('isAdminUnlocked') === 'true';
+
+    // 初始化右上角按鈕狀態
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+    if (adminToggleBtn) {
+      adminToggleBtn.innerText = isAdmin ? '🔓' : '🔒';
+    }
+
+    // 右上角按鈕點擊邏輯
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('adminToggleBtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          if (isAdmin) {
+            // 如果目前是解鎖狀態，再按一下直接鎖定（不用密碼）
+            isAdmin = false;
+            localStorage.removeItem('isAdminUnlocked');
+            toggleBtn.innerText = '🔒';
+            alert("已恢復為一般使用者權限！");
+            location.reload();
+          } else {
+            // 如果是鎖定狀態，彈出密碼輸入框
+            const pwd = prompt("請輸入管理員密碼：");
+            if (pwd === "two851011") {
+              isAdmin = true;
+              localStorage.setItem('isAdminUnlocked', 'true');
+              toggleBtn.innerText = '🔓';
+              alert("管理員權限已解鎖！");
+              location.reload();
+            } else if (pwd !== null) {
+              alert("密碼錯誤！");
+            }
+          }
+        });
+      }
+    });
 
     function generateDynamicMorandiColor() {
       let hue;
@@ -560,7 +610,7 @@
       }
 
       viewport.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.sticky-note') || e.target.closest('.re-enter-btn') || e.target.closest('.input-stage')) return;
+        if (e.target.closest('.sticky-note') || e.target.closest('.re-enter-btn') || e.target.closest('.input-stage') || e.target.closest('.admin-toggle-btn')) return;
         stopInertia();
         isMouseDown = true;
         startMouseX = e.pageX;
