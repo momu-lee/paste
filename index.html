@@ -58,25 +58,54 @@
       background-color: #f7f2ef;
     }
 
-    /* 右上角管理員按鈕 */
-    .admin-toggle-btn {
+    /* 右上角純文字鎖頭與內嵌密碼輸入面板 */
+    .admin-container {
       position: fixed;
-      top: 20px;
-      right: 25px;
+      top: 18px;
+      right: 24px;
       z-index: 2500;
-      background: rgba(255, 255, 255, 0.75);
-      border: 1.5px solid #e2d2cc;
-      font-size: 18px;
-      padding: 8px 12px;
-      border-radius: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .admin-toggle-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 12px rgba(139, 90, 82, 0.15);
-      transition: all 0.2s;
+      opacity: 0.4;
+      transition: opacity 0.2s, transform 0.2s;
+      line-height: 1;
     }
     .admin-toggle-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.15);
+    }
+
+    .admin-panel {
+      display: none;
       background: #ffffff;
-      transform: scale(1.08);
+      border: 1px solid #e2d2cc;
+      padding: 6px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(58, 46, 43, 0.15);
+      align-items: center;
+    }
+
+    .admin-panel input {
+      font-family: var(--main-font);
+      width: 110px;
+      background: #faf6f5;
+      border: 1px solid #e2d2cc;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 12px;
+      outline: none;
+    }
+    .admin-panel input:focus {
+      border-color: var(--accent-rose);
     }
 
     /* ---------------- 階段 1：中央輸入面板（已放大） ---------------- */
@@ -410,31 +439,40 @@
       color: #5c423d;
     }
 
-    /* 右下角我要貼一張按鈕 */
+    /* 右下角放大版 Paste📝 按鈕（具備防護區，便利貼絕不靠近） */
     .re-enter-btn {
       font-family: var(--main-font);
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: 28px;
+      right: 28px;
       background: var(--accent-rose);
       color: #ffffff;
-      font-weight: 600;
+      font-weight: 700;
       border: none;
-      padding: 12px 22px;
-      border-radius: 30px;
+      padding: 16px 28px; /* 顯著加大按鈕尺寸 */
+      border-radius: 35px;
       cursor: pointer;
-      font-size: 13px;
-      z-index: 500;
-      box-shadow: 0 8px 20px rgba(139, 90, 82, 0.3);
+      font-size: 16px; /* 加大字體 */
+      z-index: 3000;
+      box-shadow: 0 10px 25px rgba(139, 90, 82, 0.35);
+      transition: transform 0.2s ease, background-color 0.2s ease;
       display: block; 
     }
-    .re-enter-btn:hover { background: var(--accent-rose-hover); }
+    .re-enter-btn:hover { 
+      background: var(--accent-rose-hover);
+      transform: scale(1.06);
+    }
   </style>
 </head>
 <body>
 
-  <!-- 右上角管理員開關按鈕 -->
-  <button class="admin-toggle-btn" id="adminToggleBtn">🔒</button>
+  <!-- 右上角純文字鎖頭與內嵌密碼輸入面板 -->
+  <div class="admin-container">
+    <button class="admin-toggle-btn" id="adminToggleBtn">🔒</button>
+    <div class="admin-panel" id="adminPanel">
+      <input type="password" id="adminPasswordInput" />
+    </div>
+  </div>
 
   <!-- 1. 輸入面板 -->
   <div class="input-stage" id="inputStage">
@@ -464,45 +502,67 @@
     </div>
   </div>
 
-  <button class="re-enter-btn" id="reEnterBtn">✏️ 我也要貼一張</button>
+  <button class="re-enter-btn" id="reEnterBtn"> Paste📝</button>
 
   <script type="module">
     let lastHue = null;
     let isAdmin = localStorage.getItem('isAdminUnlocked') === 'true';
 
-    // 初始化右上角按鈕狀態
     const adminToggleBtn = document.getElementById('adminToggleBtn');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+
     if (adminToggleBtn) {
       adminToggleBtn.innerText = isAdmin ? '🔓' : '🔒';
     }
 
-    // 右上角按鈕點擊邏輯
     document.addEventListener('DOMContentLoaded', () => {
       const toggleBtn = document.getElementById('adminToggleBtn');
+      const panel = document.getElementById('adminPanel');
+      const pwdInput = document.getElementById('adminPasswordInput');
+
       if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (isAdmin) {
-            // 如果目前是解鎖狀態，再按一下直接鎖定（不用密碼）
             isAdmin = false;
             localStorage.removeItem('isAdminUnlocked');
             toggleBtn.innerText = '🔒';
-            alert("已恢復為一般使用者權限！");
+            panel.style.display = 'none';
             location.reload();
           } else {
-            // 如果是鎖定狀態，彈出密碼輸入框
-            const pwd = prompt("請輸入管理員密碼：");
-            if (pwd === "two851011") {
-              isAdmin = true;
-              localStorage.setItem('isAdminUnlocked', 'true');
-              toggleBtn.innerText = '🔓';
-              alert("管理員權限已解鎖！");
-              location.reload();
-            } else if (pwd !== null) {
-              alert("密碼錯誤！");
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+            if (panel.style.display === 'flex') {
+              pwdInput.value = '';
+              pwdInput.focus();
             }
           }
         });
       }
+
+      if (pwdInput) {
+        pwdInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            if (pwdInput.value === "two851011") {
+              isAdmin = true;
+              localStorage.setItem('isAdminUnlocked', 'true');
+              toggleBtn.innerText = '🔓';
+              panel.style.display = 'none';
+              pwdInput.value = '';
+              location.reload();
+            } else {
+              pwdInput.value = '';
+              pwdInput.focus();
+            }
+          }
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (panel && !panel.contains(e.target) && e.target !== toggleBtn) {
+          panel.style.display = 'none';
+        }
+      });
     });
 
     function generateDynamicMorandiColor() {
@@ -542,8 +602,17 @@
           const maxOffsetY = Math.max(0, cellHeight - NOTE_HEIGHT - 20);
           const randomX = cellX + 10 + Math.floor(Math.random() * maxOffsetX);
           const randomY = cellY + 10 + Math.floor(Math.random() * maxOffsetY);
-          slots.push({ x: randomX, y: randomY });
+          
+          // 擴大防護區範圍以配合放大的按鈕
+          const isTooCloseToButton = (randomX > pageWidth - 220 && randomY > pageHeight - 120);
+          if (!isTooCloseToButton) {
+            slots.push({ x: randomX, y: randomY });
+          }
         }
+      }
+
+      if (slots.length === 0) {
+        slots.push({ x: pageIndex * pageWidth + 50, y: 50 });
       }
 
       for (let i = slots.length - 1; i > 0; i--) {
@@ -610,7 +679,7 @@
       }
 
       viewport.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.sticky-note') || e.target.closest('.re-enter-btn') || e.target.closest('.input-stage') || e.target.closest('.admin-toggle-btn')) return;
+        if (e.target.closest('.sticky-note') || e.target.closest('.re-enter-btn') || e.target.closest('.input-stage') || e.target.closest('.admin-container')) return;
         stopInertia();
         isMouseDown = true;
         startMouseX = e.pageX;
