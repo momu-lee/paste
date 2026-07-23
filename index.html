@@ -702,7 +702,7 @@
         if (e.deltaY !== 0) viewport.scrollLeft += e.deltaY;
       }, { passive: true });
 
-      // 即時同步雲端資料（加上備用直接讀取，確保重整一定看得到）
+      // 即時同步雲端資料
       const q = window.query(window.messagesRef, window.orderBy("timestamp", "asc"), window.limit(100));
       
       window.getDocs(q).then((querySnapshot) => {
