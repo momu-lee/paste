@@ -353,24 +353,12 @@
       will-change: transform;
     }
 
+    /* ✨ 柔和珍珠白光圈 (無 Fade Out，維持發光直到時間到直接關閉) */
     .sticky-note.new-paste-flash {
-      animation: pasteGlow 2.5s ease-out forwards !important;
+      box-shadow: 0 0 22px rgba(255, 255, 255, 0.95), 0 0 40px rgba(255, 255, 255, 0.7), 0 10px 25px rgba(58, 46, 43, 0.15) !important;
+      border-color: #ffffff !important;
       z-index: 9999 !important;
-    }
-
-    @keyframes pasteGlow {
-      0% {
-        transform: scale(1.3) rotate(0deg);
-        box-shadow: 0 0 35px #ffd700, 0 0 60px #ff7b00;
-      }
-      50% {
-        transform: scale(1.1) rotate(-3deg);
-        box-shadow: 0 0 25px #ffd700, 0 0 40px #ff7b00;
-      }
-      100% {
-        transform: scale(1) rotate(var(--rot));
-        box-shadow: 0 10px 25px rgba(58, 46, 43, 0.15);
-      }
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
     }
 
     @keyframes smoothRiverFlow {
@@ -380,7 +368,7 @@
     }
 
     @keyframes pasteIn {
-      from { opacity: 0; transform: scale(1.2) rotate(calc(var(--rot) + 5deg)); }
+      from { opacity: 0; transform: scale(1) rotate(calc(var(--rot) + 3deg)); }
       to { opacity: 0.92; transform: scale(1) rotate(var(--rot)); }
     }
 
@@ -509,7 +497,7 @@
       overflow-y: auto;
       word-break: break-word;
       white-space: pre-wrap;
-      padding-right: 28px; /* 右側留白避免撞到關閉按鈕 ✕ */
+      padding-right: 28px;
     }
 
     .modal-footer {
@@ -646,7 +634,6 @@
     let lastHue = null;
     let isAdmin = localStorage.getItem('isAdminUnlocked') === 'true';
     let editingDocId = null; 
-    let newlyCreatedDocId = null; 
     let allNotesMap = new Map();
 
     function getMyNotesHistory() {
@@ -1083,25 +1070,7 @@
             allNotesMap.set(docId, data);
             if (!renderedDocIds.has(docId)) {
               renderedDocIds.add(docId);
-              const element = createStickyNote(docId, data);
-
-              if (docId === newlyCreatedDocId && element) {
-                newlyCreatedDocId = null;
-                setTimeout(() => {
-                  const noteX = parseFloat(element.style.left);
-                  const noteY = parseFloat(element.style.top);
-                  const isMobile = window.innerWidth <= 768;
-
-                  if (isMobile) {
-                    viewport.scrollTo({ top: Math.max(0, noteY - 100), behavior: 'smooth' });
-                  } else {
-                    viewport.scrollTo({ left: Math.max(0, noteX - window.innerWidth / 2 + 100), behavior: 'smooth' });
-                  }
-
-                  element.classList.add('new-paste-flash');
-                  setTimeout(() => { element.classList.remove('new-paste-flash'); }, 2600);
-                }, 100);
-              }
+              createStickyNote(docId, data);
             }
           }
           if (change.type === "modified") {
@@ -1189,21 +1158,65 @@
               allNotesMap.set(editingDocId, currentData);
 
             } else {
-              const docRef = await window.addDoc(window.messagesRef, {
+              const tempId = "temp-" + Date.now();
+              const noteData = {
                 nickname: nickname,
                 threads: threads,
                 text: text,
-                likes: 0,
+                likes: 0
+              };
+
+              renderedDocIds.add(tempId);
+              const element = createStickyNote(tempId, noteData, true);
+
+              if (element) {
+                setTimeout(() => {
+                  const noteX = parseFloat(element.style.left);
+                  const noteY = parseFloat(element.style.top);
+                  const isMobile = window.innerWidth <= 768;
+
+                  if (isMobile) {
+                    viewport.scrollTo({ top: Math.max(0, noteY - 100), behavior: 'smooth' });
+                  } else {
+                    viewport.scrollTo({ left: Math.max(0, noteX - window.innerWidth / 2 + 100), behavior: 'smooth' });
+                  }
+
+                  // 點亮白光（不淡出，時間到直接移除 class）
+                  element.classList.add('new-paste-flash');
+                  setTimeout(() => { element.classList.remove('new-paste-flash'); }, 2800);
+                }, 50);
+              }
+
+              const docRef = await window.addDoc(window.messagesRef, {
+                ...noteData,
                 timestamp: window.serverTimestamp()
               });
-              newlyCreatedDocId = docRef.id;
-              saveMyNoteToHistory(docRef.id);
+
+              const realId = docRef.id;
+
+              saveMyNoteToHistory(realId);
+              allNotesMap.set(realId, noteData);
+              renderedDocIds.add(realId);
+              renderedDocIds.delete(tempId);
+
+              if (element) {
+                element.id = `note-${realId}`;
+                const editBtn = element.querySelector('.icon-btn-inline[title="編輯"]');
+                const delBtn = element.querySelector('.icon-btn-inline[title="刪除"]');
+                const likeBtn = element.querySelector('.like-btn');
+
+                if (editBtn) editBtn.id = `edit-btn-${realId}`;
+                if (delBtn) delBtn.id = `del-btn-${realId}`;
+                if (likeBtn) likeBtn.id = `like-btn-${realId}`;
+              }
             }
 
             nicknameInput.value = '';
             threadsInput.value = '';
             messageInput.value = '';
-            hideInputModal();
+            
+            inputStage.style.display = 'none';
+            editingDocId = null;
           }
         } catch (err) {
           console.log("操作失敗：" + err.message);
@@ -1218,11 +1231,14 @@
       reEnterBtn.addEventListener('click', showInputModal);
     }
 
-    function createStickyNote(docId, data) {
+    function createStickyNote(docId, data, forceCanEdit = false) {
       const boardStage = document.getElementById('boardStage');
       if (!boardStage) return null;
 
-      const note = document.createElement('div');
+      let note = document.getElementById(`note-${docId}`);
+      if (note) return note;
+
+      note = document.createElement('div');
       note.className = 'sticky-note';
       note.id = `note-${docId}`;
 
@@ -1269,7 +1285,7 @@
       const likesCount = data.likes || 0;
 
       const authorText = (isAdmin && threads) ? `— ${nickname} (@${threads})` : `— ${nickname}`;
-      const canEditDelete = isAdmin || isWithinFifteenMinutes(docId);
+      const canEditDelete = forceCanEdit || isAdmin || isWithinFifteenMinutes(docId);
 
       note.innerHTML = `
         <div>
@@ -1297,26 +1313,31 @@
       }, 50);
 
       // 按讚
-      const likeBtn = document.getElementById(`like-btn-${docId}`);
-      likeBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        try {
-          const noteRef = window.doc(window.db, "sticky_notes", docId);
-          await window.updateDoc(noteRef, { likes: window.increment(1) });
-        } catch (err) {
-          console.log("按讚失敗：" + err.message);
-        }
-      });
+      const likeBtn = note.querySelector('.like-btn');
+      if (likeBtn) {
+        likeBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const targetId = note.id.replace('note-', '');
+          if (targetId.startsWith('temp-')) return;
+          try {
+            const noteRef = window.doc(window.db, "sticky_notes", targetId);
+            await window.updateDoc(noteRef, { likes: window.increment(1) });
+          } catch (err) {
+            console.log("按讚失敗：" + err.message);
+          }
+        });
+      }
 
       // 編輯
-      const editBtn = document.getElementById(`edit-btn-${docId}`);
+      const editBtn = note.querySelector('.icon-btn-inline[title="編輯"]');
       if (editBtn) {
         editBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           document.getElementById('modalOverlay').style.display = 'none';
           
-          editingDocId = docId;
-          const currentData = allNotesMap.get(docId) || {};
+          const targetId = note.id.replace('note-', '');
+          editingDocId = targetId;
+          const currentData = allNotesMap.get(targetId) || data;
           
           document.getElementById('inputStageTitle').innerText = "✏️ 編輯便利貼";
           document.getElementById('submitBtn').innerText = "儲存修改";
@@ -1328,16 +1349,18 @@
       }
 
       // 刪除
-      const delBtn = document.getElementById(`del-btn-${docId}`);
+      const delBtn = note.querySelector('.icon-btn-inline[title="刪除"]');
       if (delBtn) {
         delBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          await deleteNoteFromCloud(docId);
+          const targetId = note.id.replace('note-', '');
+          await deleteNoteFromCloud(targetId);
         });
       }
 
       // 點開放大 Modal
       note.addEventListener('click', () => {
+        const targetId = note.id.replace('note-', '');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalCard = document.getElementById('modalCard');
         const modalText = document.getElementById('modalText');
@@ -1349,19 +1372,19 @@
         
         modalCard.style.backgroundColor = randomColor;
 
-        const currentData = allNotesMap.get(docId) || {};
+        const currentData = allNotesMap.get(targetId) || data;
         const currentNickname = escapeHtml(currentData.nickname || '無名氏');
 
         modalText.innerText = currentData.text || '';
         modalAuthor.innerText = (isAdmin && currentData.threads) ? `— ${currentNickname} (@${escapeHtml(currentData.threads)})` : `— ${currentNickname}`;
         modalLikeCount.innerText = currentData.likes || 0;
 
-        modalDeleteBtn.dataset.currentId = docId;
-        modalEditBtn.dataset.currentId = docId;
-        modalLikeBtn.dataset.currentId = docId;
+        modalDeleteBtn.dataset.currentId = targetId;
+        modalEditBtn.dataset.currentId = targetId;
+        modalLikeBtn.dataset.currentId = targetId;
 
-        const valid = isWithinFifteenMinutes(docId);
-        if (isAdmin || valid) {
+        const valid = forceCanEdit || isAdmin || isWithinFifteenMinutes(targetId);
+        if (valid) {
           modalDeleteBtn.style.display = 'inline-block';
           modalEditBtn.style.display = 'inline-block';
         } else {
@@ -1377,6 +1400,11 @@
 
     async function deleteNoteFromCloud(docId) {
       try {
+        if (docId.startsWith('temp-')) {
+          const el = document.getElementById(`note-${docId}`);
+          if (el) el.remove();
+          return;
+        }
         if (window.deleteDoc && window.doc && window.db) {
           await window.deleteDoc(window.doc(window.db, "sticky_notes", docId));
           removeMyNoteFromHistory(docId);
