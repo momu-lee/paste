@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rose Garden River - 玫瑰花園漂漂河</title>
+  <title>A message to whom we loved...</title>
   
   <!-- Firebase SDK -->
   <script type="module">
@@ -597,11 +597,11 @@
   <div class="input-stage" id="inputStage">
     <div class="input-card">
       <button class="close-btn" id="closeBtn">✕</button>
-      <h1 id="inputStageTitle">✍️ 寫一張玫瑰花園漂漂河</h1>
+      <h1 id="inputStageTitle">✍️ 留下你想說的任何話</h1>
       
       <div class="field-group">
-        <div class="error-msg" id="nicknameErr">請輸入暱稱! (最多7字)</div>
-        <input type="text" id="nickname" placeholder="暱稱 (最多7字)..." maxlength="7" />
+        <div class="error-msg" id="nicknameErr">請輸入暱稱!</div>
+        <input type="text" id="nickname" placeholder="暱稱..." maxlength="30" />
       </div>
 
       <div class="field-group">
@@ -614,7 +614,7 @@
         <textarea id="message" placeholder="想說的話..."></textarea>
       </div>
 
-      <button class="submit-btn" id="submitBtn">送出便利貼</button>
+      <button class="submit-btn" id="submitBtn">送出</button>
     </div>
   </div>
 
@@ -919,7 +919,7 @@
         clearErrors();
         editingDocId = targetDocId;
 
-        inputStageTitle.innerText = "✏️ 編輯便利貼";
+        inputStageTitle.innerText = "✏️ 編輯";
         submitBtn.innerText = "儲存修改";
         const data = allNotesMap.get(editingDocId);
         if (data) {
@@ -936,8 +936,8 @@
         clearErrors();
         editingDocId = null;
 
-        inputStageTitle.innerText = "✍️ 寫一張玫瑰花園漂漂河";
-        submitBtn.innerText = "送出便利貼";
+        inputStageTitle.innerText = "✍️ 留下你想說的任何話";
+        submitBtn.innerText = "送出";
         nicknameInput.value = '';
         threadsInput.value = '';
         messageInput.value = '';
@@ -1136,7 +1136,7 @@
 
         let hasError = false;
 
-        if (!nickname || nickname.length > 7) {
+        if (!nickname || nickname.length > 30) {
           nicknameErr.style.display = 'block';
           hasError = true;
         }
