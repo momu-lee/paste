@@ -275,6 +275,7 @@
       position: relative;
       user-select: none;
       -webkit-overflow-scrolling: touch;
+      background-color: #f7f2ef;
     }
     .viewport:active { cursor: grabbing; }
 
@@ -282,6 +283,23 @@
     .viewport::-webkit-scrollbar-thumb {
       background: rgba(139, 90, 82, 0.25);
       border-radius: 10px;
+    }
+
+    /* 🖼️ 把背景直接固定在整個 viewport 底部，完全不使用 repeat-x 或隨滾動位移，徹底解決滑過去變白/破圖的問題！ */
+    .viewport::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100svh;
+      background-image: url('https://images.plurk.com/5ArczENfHfiCizPsxdPlex.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.60;
+      z-index: 0;
+      pointer-events: none;
     }
 
     .board-stage {
@@ -293,24 +311,8 @@
       padding: 20px;
       pointer-events: auto;
       perspective: 1000px;
-      background-color: #f7f2ef;
+      background-color: transparent;
       z-index: 1;
-    }
-
-    .board-stage::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url('https://images.plurk.com/5ArczENfHfiCizPsxdPlex.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: repeat-x;
-      opacity: 0.60;
-      z-index: 0;
-      pointer-events: none;
     }
 
     @media (max-width: 768px) {
@@ -319,29 +321,13 @@
         overflow-y: auto;
       }
       .viewport::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100svh;
         background-image: url('https://images.plurk.com/2twQxiNJxYn1PJkwMKgGQY.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.60;
-        z-index: 0;
-        pointer-events: none;
       }
       .board-stage {
         width: 100vw !important;
         min-height: 100svh;
         height: auto !important;
         padding-bottom: 100px;
-        background-color: transparent;
-      }
-      .board-stage::before {
-        display: none;
       }
     }
 
@@ -601,7 +587,7 @@
       
       <div class="field-group">
         <div class="error-msg" id="nicknameErr">請輸入暱稱!</div>
-        <input type="text" id="nickname" placeholder="暱稱..." maxlength="30" />
+        <input type="text" id="nickname" placeholder="暱稱..." />
       </div>
 
       <div class="field-group">
@@ -614,7 +600,7 @@
         <textarea id="message" placeholder="想說的話..."></textarea>
       </div>
 
-      <button class="submit-btn" id="submitBtn">送出</button>
+      <button class="submit-btn" id="submitBtn">送出便利貼</button>
     </div>
   </div>
 
@@ -919,7 +905,7 @@
         clearErrors();
         editingDocId = targetDocId;
 
-        inputStageTitle.innerText = "✏️ 編輯";
+        inputStageTitle.innerText = "✏️ 編輯便利貼";
         submitBtn.innerText = "儲存修改";
         const data = allNotesMap.get(editingDocId);
         if (data) {
@@ -937,7 +923,7 @@
         editingDocId = null;
 
         inputStageTitle.innerText = "✍️ 留下你想說的任何話";
-        submitBtn.innerText = "送出";
+        submitBtn.innerText = "送出便利貼";
         nicknameInput.value = '';
         threadsInput.value = '';
         messageInput.value = '';
@@ -1136,7 +1122,7 @@
 
         let hasError = false;
 
-        if (!nickname || nickname.length > 30) {
+        if (!nickname) {
           nicknameErr.style.display = 'block';
           hasError = true;
         }
@@ -1185,9 +1171,9 @@
 
               const realId = docRef.id;
               saveMyNoteToHistory(realId);
+
               allNotesMap.set(realId, noteData);
               renderedDocIds.add(realId);
-
               const element = createStickyNote(realId, noteData, true);
 
               if (element) {
@@ -1232,7 +1218,6 @@
       const boardStage = document.getElementById('boardStage');
       if (!boardStage) return null;
 
-      // 🛡️ 絕對防護網：若畫面上或已渲染紀錄中有這張 ID，直接終止，絕不重複建立！
       let existingNote = document.getElementById(`note-${docId}`);
       if (existingNote || renderedDocIds.has(docId)) {
         if (existingNote) return existingNote;
@@ -1384,7 +1369,7 @@
         modalEditBtn.dataset.currentId = targetId;
         modalLikeBtn.dataset.currentId = targetId;
 
-        const valid = forceCanEdit || isAdmin || isWithinFifteenMinutes(targetId);
+        const valid = isWithinFifteenMinutes(targetId) || isAdmin;
         if (valid) {
           modalDeleteBtn.style.display = 'inline-block';
           modalEditBtn.style.display = 'inline-block';
