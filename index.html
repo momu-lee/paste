@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>A message to whom we loved...</title>
+  <title>𝓐 𝓶𝓮𝓼𝓼𝓪𝓰𝓮 𝓽𝓸 𝓽𝓱𝓸𝓼𝓮 𝔀𝓮 𝓵𝓸𝓿𝓮.</title>
   
   <!-- Firebase SDK -->
   <script type="module">
@@ -910,7 +910,7 @@
         clearErrors();
         editingDocId = targetDocId;
 
-        inputStageTitle.innerText = "✏️ 編輯便利貼";
+        inputStageTitle.innerText = "✏️ 編輯";
         submitBtn.innerText = "儲存修改";
         const data = allNotesMap.get(editingDocId);
         if (data) {
@@ -1368,7 +1368,7 @@
           editingDocId = targetId;
           const currentData = allNotesMap.get(targetId) || data;
           
-          document.getElementById('inputStageTitle').innerText = "✏️ 編輯便利貼";
+          document.getElementById('inputStageTitle').innerText = "✏️ 編輯";
           document.getElementById('submitBtn').innerText = "儲存修改";
           document.getElementById('nickname').value = currentData.nickname || '';
           document.getElementById('threads').value = currentData.threads || '';
